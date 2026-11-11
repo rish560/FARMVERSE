@@ -1,6 +1,23 @@
 import axios from 'axios';
 
-const baseURL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8085/api';
+const configuredBaseURL = import.meta.env.VITE_API_BASE_URL?.trim();
+const baseURL = (() => {
+  if (!configuredBaseURL) {
+    return '/api';
+  }
+
+  // Render and other hosted platforms redirect plain HTTP to HTTPS. Avoid
+  // turning an API POST into a redirected request when the app is secure.
+  if (
+    typeof window !== 'undefined' &&
+    window.location.protocol === 'https:' &&
+    configuredBaseURL.startsWith('http://')
+  ) {
+    return `https://${configuredBaseURL.substring('http://'.length)}`;
+  }
+
+  return configuredBaseURL.replace(/\/+$/, '');
+})();
 
 const axiosInstance = axios.create({
   baseURL,
